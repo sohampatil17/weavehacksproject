@@ -13,7 +13,7 @@ This tool takes patient medical records (PDF format) and:
 
 ## 🏗️ Tech Stack
 
-### **Phase 1 (Completed) - Core API Integrations**
+### Core API Integrations**
 - ✅ **Google Document AI** - PDF parsing and data extraction
 - ✅ **clinicaltrials.gov API** - Real-time trial fetching
 - ✅ **Vertex AI Gemini** - LLM-powered eligibility reasoning
@@ -21,15 +21,11 @@ This tool takes patient medical records (PDF format) and:
 - ✅ **FastAPI** - Backend REST API
 - ✅ **React** - Frontend web application
 
-### **Phase 2 (In Progress) - Agent Orchestration**
+###  Agent Orchestration**
 - 🚧 **Google ADK (Agent Development Kit)** - Agent workflow definition
 - 🚧 **A2A Protocol** - Agent-to-agent communication
 - 🚧 **MCP (Model Context Protocol)** - Enhanced context passing
 
-### **Phase 3 (Planned) - UI Enhancement**
-- 📋 **Dashboard UI** - Patient summary and provider interface
-- ✅ **Trial Cards** - Visual trial representation with eligibility ticks
-- 🔄 **Loading States** - Better UX during processing
 
 ## 🚀 Features
 
