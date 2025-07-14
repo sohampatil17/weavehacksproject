@@ -24,7 +24,7 @@ def run_eligibility_analysis(patient_data: Dict[str, Any], trials: List[Dict[str
 
 def analyze_trial_eligibility(patient_data: Dict[str, Any], trial: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Analyze patient eligibility for a specific trial using Gemini
+    Analyze patient eligibility for a specific trial using Gemini with 70% threshold
     """
     criteria_results = []
     
@@ -33,22 +33,29 @@ def analyze_trial_eligibility(patient_data: Dict[str, Any], trial: Dict[str, Any
         eligibility_result = analyze_single_criterion(patient_data, criterion, trial)
         criteria_results.append(eligibility_result)
     
-    # Determine overall eligibility
-    inclusion_criteria = [c for c in criteria_results if c.get("type") == "inclusion"]
-    exclusion_criteria = [c for c in criteria_results if c.get("type") == "exclusion"]
-    
-    # Patient is eligible if they meet ALL inclusion criteria AND NO exclusion criteria
-    meets_inclusions = all(c.get("eligible", False) for c in inclusion_criteria)
-    meets_exclusions = all(not c.get("eligible", True) for c in exclusion_criteria)
-    
-    overall_eligible = meets_inclusions and meets_exclusions
+    # Calculate eligibility percentage
+    if not criteria_results:
+        overall_eligible = False
+        eligibility_percentage = 0
+        match_percentage = 0
+    else:
+        # Count met criteria
+        met_criteria = sum(1 for c in criteria_results if c.get("eligible", False))
+        total_criteria = len(criteria_results)
+        eligibility_percentage = (met_criteria / total_criteria) * 100
+        match_percentage = int(eligibility_percentage)
+        
+        # Patient is eligible if they meet more than 70% of criteria
+        overall_eligible = eligibility_percentage > 70.0
     
     return {
         "trial_id": trial["trial_id"],
         "title": trial["title"],
         "criteria": criteria_results,
         "overall_eligible": overall_eligible,
-        "eligibility_summary": generate_eligibility_summary(criteria_results, overall_eligible)
+        "eligibility_percentage": eligibility_percentage,
+        "match_percentage": match_percentage,
+        "eligibility_summary": generate_eligibility_summary_with_percentage(criteria_results, overall_eligible, eligibility_percentage)
     }
 
 def analyze_single_criterion(patient_data: Dict[str, Any], criterion: Dict[str, str], trial: Dict[str, Any]) -> Dict[str, Any]:
@@ -229,9 +236,21 @@ def generate_eligibility_summary(criteria_results: List[Dict[str, Any]], overall
     else:
         return f"Patient is NOT ELIGIBLE. Meets {met_criteria}/{total_criteria} criteria."
 
+def generate_eligibility_summary_with_percentage(criteria_results: List[Dict[str, Any]], overall_eligible: bool, eligibility_percentage: float) -> str:
+    """
+    Generate a summary of eligibility analysis with percentage
+    """
+    total_criteria = len(criteria_results)
+    met_criteria = sum(1 for c in criteria_results if c.get("eligible", False))
+    
+    if overall_eligible:
+        return f"Patient is ELIGIBLE. Meets {met_criteria}/{total_criteria} criteria ({int(eligibility_percentage)}%)."
+    else:
+        return f"Patient is NOT ELIGIBLE. Meets {met_criteria}/{total_criteria} criteria ({int(eligibility_percentage)}%)."
+
 def get_mock_eligibility_analysis(patient_data: Dict[str, Any], trials: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    Return mock eligibility analysis as fallback
+    Return mock eligibility analysis as fallback with 70% threshold
     """
     results = []
     
@@ -265,15 +284,28 @@ def get_mock_eligibility_analysis(patient_data: Dict[str, Any], trials: List[Dic
                 "analyzed_by": "mock"
             })
         
-        overall_eligible = all(c["eligible"] for c in criteria_results if c["type"] == "inclusion") and \
-                          all(not c["eligible"] for c in criteria_results if c["type"] == "exclusion")
+        # Calculate eligibility percentage (70% threshold)
+        if not criteria_results:
+            overall_eligible = False
+            eligibility_percentage = 0
+            match_percentage = 0
+        else:
+            met_criteria = sum(1 for c in criteria_results if c.get("eligible", False))
+            total_criteria = len(criteria_results)
+            eligibility_percentage = (met_criteria / total_criteria) * 100
+            match_percentage = int(eligibility_percentage)
+            
+            # Patient is eligible if they meet more than 70% of criteria
+            overall_eligible = eligibility_percentage > 70.0
         
         trial_result = {
             "trial_id": trial["trial_id"],
             "title": trial["title"],
             "criteria": criteria_results,
             "overall_eligible": overall_eligible,
-            "eligibility_summary": generate_eligibility_summary(criteria_results, overall_eligible)
+            "eligibility_percentage": eligibility_percentage,
+            "match_percentage": match_percentage,
+            "eligibility_summary": generate_eligibility_summary_with_percentage(criteria_results, overall_eligible, eligibility_percentage)
         }
         results.append(trial_result)
     

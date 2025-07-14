@@ -1,8 +1,13 @@
-fastapi==0.116.1
-uvicorn==0.35.0
-google-cloud-documentai==3.5.0
-google-cloud-aiplatform==1.103.0
-wandb==0.21.0
-requests==2.32.4
-pydantic==2.11.7
-python-multipart==0.0.6 
+# Core packages - let pip resolve compatible versions
+fastapi>=0.115.0
+uvicorn>=0.32.0
+python-multipart>=0.0.6
+pydantic>=2.9.0
+google-cloud-documentai>=2.20.1
+google-cloud-aiplatform>=1.95.1
+requests>=2.32.4
+wandb>=0.16.0
+
+# Phase 2: Google ADK and A2A Protocol
+google-adk>=1.6.1
+a2a-protocol>=0.1.0 

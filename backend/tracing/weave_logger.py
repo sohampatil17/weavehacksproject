@@ -10,12 +10,17 @@ wandb.login(key=WANDB_API_KEY)
 class WeaveLogger:
     def __init__(self, session_name: str = None):
         self.session_name = session_name or f"clinical-trial-session-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
-        self.run = wandb.init(
-            project=WANDB_PROJECT,
-            name=self.session_name,
-            reinit=True,
-            tags=["clinical-trials", "eligibility-analysis", "document-ai", "vertex-ai"]
-        )
+        try:
+            self.run = wandb.init(
+                project=WANDB_PROJECT,
+                name=self.session_name,
+                reinit=True,
+                tags=["clinical-trials", "eligibility-analysis", "document-ai", "vertex-ai"],
+                mode="online"  # Force online mode to avoid hanging
+            )
+        except Exception as e:
+            print(f"[W&B Weave] Warning: Failed to initialize W&B: {e}")
+            self.run = None
         self.step_counter = 0
         
     def log_workflow_step(self, step_name: str, data: Dict[str, Any], metadata: Dict[str, Any] = None):
@@ -34,11 +39,15 @@ class WeaveLogger:
         }
         
         # Log to W&B with step-specific metrics
-        wandb.log({
-            f"step_{self.step_counter}_{step_name}": log_entry,
-            "current_step": self.step_counter,
-            "step_name": step_name
-        })
+        if self.run:
+            try:
+                wandb.log({
+                    f"step_{self.step_counter}_{step_name}": log_entry,
+                    "current_step": self.step_counter,
+                    "step_name": step_name
+                })
+            except Exception as e:
+                print(f"[W&B Weave] Warning: Failed to log step {step_name}: {e}")
         
         # Log step-specific metrics
         self._log_step_metrics(step_name, data, metadata)
@@ -104,7 +113,23 @@ class WeaveLogger:
             "has_raw_text": bool(patient_data.get("raw_text"))
         }
         
-        wandb.log({"patient_summary": summary})
+        try:
+            wandb.log({"patient_summary": summary})
+        except Exception as e:
+            print(f"[W&B Weave] Warning: Failed to log patient summary: {e}")
+            # Try to reinitialize if needed
+            try:
+                if not self.run or not wandb.run:
+                    self.run = wandb.init(
+                        project=WANDB_PROJECT,
+                        name=self.session_name,
+                        reinit=True,
+                        tags=["clinical-trials", "eligibility-analysis", "document-ai", "vertex-ai"],
+                        mode="online"
+                    )
+                    wandb.log({"patient_summary": summary})
+            except Exception as e2:
+                print(f"[W&B Weave] Warning: Failed to reinitialize and log: {e2}")
         
         # Create patient demographics table
         demographics_data = [
@@ -214,7 +239,10 @@ class WeaveLogger:
             "context": context or {}
         }
         
-        wandb.log({"error": error_entry})
+        try:
+            wandb.log({"error": error_entry})
+        except Exception as e:
+            print(f"[W&B Weave] Warning: Failed to log error: {e}")
         print(f"[W&B Weave] ERROR - {error_type}: {error_message}")
     
     def finalize_session(self, final_results: Dict[str, Any]):
@@ -248,19 +276,32 @@ _logger = None
 
 def get_logger() -> WeaveLogger:
     """
-    Get or create the global logger instance
+    Get or create a new logger instance for each request
     """
-    global _logger
-    if _logger is None:
-        _logger = WeaveLogger()
-    return _logger
+    try:
+        return WeaveLogger()
+    except Exception as e:
+        print(f"[W&B Weave] Warning: Failed to create logger: {e}")
+        # Create a minimal logger that doesn't crash
+        return type('MockLogger', (), {
+            'log_workflow_step': lambda self, *args, **kwargs: None,
+            'log_patient_summary': lambda self, *args, **kwargs: None,
+            'log_trials_summary': lambda self, *args, **kwargs: None,
+            'log_eligibility_results': lambda self, *args, **kwargs: None,
+            'log_error': lambda self, *args, **kwargs: None,
+            'finalize_session': lambda self, *args, **kwargs: None
+        })()
 
 def log_workflow_step(step_name: str, data: Dict[str, Any], metadata: Dict[str, Any] = None):
     """
     Convenience function for logging workflow steps
     """
-    logger = get_logger()
-    logger.log_workflow_step(step_name, data, metadata)
+    try:
+        logger = get_logger()
+        logger.log_workflow_step(step_name, data, metadata)
+    except Exception as e:
+        print(f"[W&B Weave] Warning: Logging failed for step {step_name}: {e}")
+        # Continue execution even if logging fails
 
 def log_patient_summary(patient_data: Dict[str, Any]):
     """

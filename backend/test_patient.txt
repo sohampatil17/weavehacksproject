@@ -1,0 +1,34 @@
+Patient Medical Record
+
+Name: John Smith
+Age: 65
+Date of Birth: March 15, 1958
+Gender: Male
+Medical Record Number: MR123456
+
+Medical History:
+- Type 2 Diabetes Mellitus (diagnosed 2015)
+- Hypertension (diagnosed 2010)
+- High cholesterol (diagnosed 2018)
+
+Current Medications:
+- Metformin 500mg twice daily
+- Lisinopril 10mg daily
+- Atorvastatin 20mg daily
+
+Allergies:
+- Penicillin (causes rash)
+- Latex (causes hives)
+
+Laboratory Results:
+- HbA1c: 7.2%
+- Fasting glucose: 145 mg/dL
+- Blood pressure: 140/90 mmHg
+- LDL cholesterol: 120 mg/dL
+
+Recent Procedures:
+- Annual physical exam (2024-01-15)
+- Diabetic eye exam (2024-02-20)
+
+Insurance: Medicare
+Emergency Contact: Jane Smith (spouse) - (555) 123-4567 
